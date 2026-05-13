@@ -1,0 +1,21 @@
+{
+  "name": "delivery_report",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node src/test-cli.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "archiver": "^8.0.0",
+    "docx": "^9.6.1",
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "xlsx": "^0.18.5"
+  }
+}
