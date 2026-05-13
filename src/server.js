@@ -157,7 +157,7 @@ app.post("/api/generate", upload.single("file"), async (req, res) => {
   await archive.finalize();
 });
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3033;
 app.listen(PORT, () => {
   console.log(`Belge sunucusu http://localhost:${PORT} (iade + teslim tutanağı)`);
 });
