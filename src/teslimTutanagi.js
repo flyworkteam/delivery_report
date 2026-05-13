@@ -26,6 +26,9 @@ const { formatDateTr, formatBarcode, sanitizeFileName } = require("./letter");
 
 const ROOT = path.join(__dirname, "..");
 const LOGO_PATH = path.join(ROOT, "arcon_kozmetik_logo.jpeg");
+/** letter.js ile aynı logo boyutu (ImageRun transformation). */
+const LOGO_WIDTH = 174;
+const LOGO_HEIGHT = 110;
 
 let logoBuf = null;
 function getLogo() {
@@ -126,7 +129,7 @@ function headerTitleLogoTable() {
                 children: [
                   new ImageRun({
                     data: logo,
-                    transformation: { width: 160, height: 102 },
+                    transformation: { width: LOGO_WIDTH, height: LOGO_HEIGHT },
                     type: "jpg",
                   }),
                 ],

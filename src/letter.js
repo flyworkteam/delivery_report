@@ -24,6 +24,9 @@ const ROOT = path.join(__dirname, "..");
 const LOGO_PATH = path.join(ROOT, "arcon_kozmetik_logo.jpeg");
 /** Sağ kenara yakın logonun sağında nefes (twips). */
 const LOGO_PADDING_RIGHT_TWIPS = 420;
+/** Word içinde logo boyutu (docx ImageRun transformation; oran korunur). */
+const LOGO_WIDTH = 174;
+const LOGO_HEIGHT = 110;
 let cachedBuffers = null;
 function getMediaBuffers() {
   if (!cachedBuffers) {
@@ -277,7 +280,7 @@ function buildDocument(row, options = {}) {
     children: [
       new ImageRun({
         data: media.logo,
-        transformation: { width: 160, height: 102 },
+        transformation: { width: LOGO_WIDTH, height: LOGO_HEIGHT },
         type: "jpg",
       }),
     ],
