@@ -245,18 +245,47 @@
         padding: 26px 32px;
         text-align: center;
         box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
-        min-width: 220px;
+        min-width: 280px;
+        max-width: min(360px, 92vw);
       }
-      .loading-box p {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 600;
+      .loading-title {
+        margin: 8px 0 0;
+        font-size: 15px;
+        font-weight: 700;
         color: var(--ink);
+      }
+      .loading-stage {
+        margin: 8px 0 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        min-height: 1.35em;
+      }
+      .progress-track {
+        margin-top: 16px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--soft);
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+        transition: width 0.18s ease-out;
+      }
+      .loading-pct {
+        margin-top: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--accent-dark);
       }
       .spinner {
         width: 42px;
         height: 42px;
-        margin: 0 auto 14px;
+        margin: 0 auto 0;
         border-radius: 50%;
         border: 3px solid var(--line);
         border-top-color: var(--accent);
@@ -326,7 +355,20 @@
     >
       <div class="loading-box">
         <div class="spinner" aria-hidden="true"></div>
-        <p>ZIP hazırlanıyor…</p>
+        <p class="loading-title">ZIP hazırlanıyor</p>
+        <p class="loading-stage" id="loadingStage">Başlanıyor…</p>
+        <div
+          id="loadingProgressBar"
+          class="progress-track"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          aria-valuetext="0%"
+        >
+          <div id="loadingProgressFill" class="progress-fill"></div>
+        </div>
+        <div class="loading-pct" id="loadingPercent">0%</div>
       </div>
     </div>
 
@@ -341,11 +383,76 @@
       const pageSubtitle = document.getElementById("pageSubtitle");
       const guideBox = document.getElementById("guideBox");
       const loadingOverlay = document.getElementById("loadingOverlay");
+      const loadingProgressFill = document.getElementById("loadingProgressFill");
+      const loadingPercent = document.getElementById("loadingPercent");
+      const loadingStage = document.getElementById("loadingStage");
+      const loadingProgressBar = document.getElementById("loadingProgressBar");
+
+      const MOCK_STAGES_TR = [
+        { min: 0, text: "Dosya sunucuya iletililiyor…" },
+        { min: 10, text: "Excel okunuyor…" },
+        { min: 26, text: "Satırlar ve mağaza bilgileri işleniyor…" },
+        { min: 42, text: "Word belgeleri oluşturuluyor…" },
+        { min: 58, text: "Tablolar ve metinler yerleştiriliyor…" },
+        { min: 72, text: "ZIP arşivi hazırlanıyor…" },
+        { min: 84, text: "Son kontroller…" },
+      ];
+
+      let mockProgressTimer = null;
+      let mockDisplayedPct = 0;
+
+      function sleep(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      function stopMockProgress() {
+        if (mockProgressTimer != null) {
+          clearInterval(mockProgressTimer);
+          mockProgressTimer = null;
+        }
+      }
+
+      function stageTextForPct(pct) {
+        let text = MOCK_STAGES_TR[0].text;
+        for (const s of MOCK_STAGES_TR) {
+          if (pct >= s.min) text = s.text;
+        }
+        return text;
+      }
+
+      function setProgressUI(pct, overrideStatus) {
+        const p = Math.min(100, Math.max(0, pct));
+        loadingProgressFill.style.width = `${p}%`;
+        loadingPercent.textContent = `${Math.round(p)}%`;
+        loadingStage.textContent =
+          overrideStatus != null ? overrideStatus : stageTextForPct(p);
+        const rounded = Math.round(p);
+        loadingProgressBar.setAttribute("aria-valuenow", String(rounded));
+        loadingProgressBar.setAttribute("aria-valuetext", `${rounded}%`);
+      }
+
+      function startMockProgress() {
+        stopMockProgress();
+        mockDisplayedPct = 3;
+        setProgressUI(mockDisplayedPct);
+        mockProgressTimer = setInterval(() => {
+          if (mockDisplayedPct >= 86) return;
+          const room = 86 - mockDisplayedPct;
+          const bump = Math.max(0.45, room * (0.055 + Math.random() * 0.095));
+          mockDisplayedPct = Math.min(86, mockDisplayedPct + bump);
+          setProgressUI(mockDisplayedPct);
+        }, 340);
+      }
 
       function setLoading(on) {
         loadingOverlay.hidden = !on;
         loadingOverlay.setAttribute("aria-hidden", on ? "false" : "true");
         document.body.style.overflow = on ? "hidden" : "";
+        if (!on) {
+          stopMockProgress();
+          mockDisplayedPct = 0;
+          setProgressUI(0, "Başlanıyor…");
+        }
       }
 
       const copy = {
@@ -407,12 +514,15 @@
         const fd = new FormData(form);
         const mod = fd.get("module") || "iade";
         setLoading(true);
+        startMockProgress();
         btn.disabled = true;
         const originalText = btn.textContent;
         btn.textContent = "Hazırlanıyor...";
         try {
           const res = await fetch(`${API_BASE}/api/generate`, { method: "POST", body: fd });
           if (!res.ok) {
+            stopMockProgress();
+            setProgressUI(Math.min(mockDisplayedPct, 35) || 12, "Sunucu yanıtı alındı…");
             const raw = await res.text();
             let err = "İstek başarısız.";
             try {
@@ -423,9 +533,13 @@
               if (t) err = t.length > 400 ? t.slice(0, 400) + "…" : t;
             }
             show(err, false);
+            await sleep(220);
             return;
           }
           const blob = await res.blob();
+          stopMockProgress();
+          setProgressUI(100, "Hazır — ZIP indiriliyor…");
+          await sleep(380);
           const a = document.createElement("a");
           a.href = URL.createObjectURL(blob);
           a.download = mod === "teslim" ? copy.teslim.zip : copy.iade.zip;
@@ -433,6 +547,9 @@
           URL.revokeObjectURL(a.href);
           show("ZIP indirildi.", true);
         } catch (err) {
+          stopMockProgress();
+          setProgressUI(Math.min(mockDisplayedPct, 40) || 15, "Bağlantı kesildi…");
+          await sleep(200);
           const isFetchError =
             err instanceof TypeError && String(err.message || "").toLowerCase().includes("fetch");
           if (isFetchError) {
