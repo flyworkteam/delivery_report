@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Arcon Kozmetik — Belge Üretimi</title>
+    <title>Arcon Kozmetik — Belge üretimi</title>
     <style>
       :root {
         font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
@@ -234,42 +234,41 @@
         <article class="left">
           <div class="brand">ARCON KOZMETİK</div>
           <h1 id="pageTitle">Belge üretimi</h1>
-          <p class="subtitle" id="pageSubtitle">Modül seçin ve Excel yükleyin.</p>
+          <p class="subtitle" id="pageSubtitle">Excel yükleyin, modülü seçin, ZIP olarak indirin.</p>
 
           <p class="guide" id="guideBox">
-            <strong>İNCELEMDEN SONRA DURUM</strong> alanında RED olan kayıtlar seçilir; her satır
-            için bir <strong>.docx</strong> üretilir ve ZIP olarak indirilir.
+            Modül seçildiğinde buradaki açıklama güncellenir.
           </p>
 
           <form id="form" class="uploader">
             <div class="module-grid" role="radiogroup" aria-label="Modül seçimi">
               <label class="module-card">
                 <input type="radio" name="module" value="iade" checked />
-                <strong>İade yazısı</strong>
-                <span>RED satırları için ayrı .docx (barkod + stok adı dosya adı).</span>
+                <strong>İade reddi yazısı</strong>
+                <span>RED satırları → her satır için bir Word dosyası; çıktılar tek ZIP içinde.</span>
               </label>
               <label class="module-card">
                 <input type="radio" name="module" value="teslim" />
                 <strong>Teslim tutanağı</strong>
-                <span>Aynı Takip No grupları tek belge; dosya adı takip numarası.</span>
+                <span>Aynı takip numarasındaki satırlar tek belgede; dosya adı takip no.</span>
               </label>
             </div>
             <div class="upload-head">
               <div class="upload-title">Excel dosyası</div>
-              <div class="upload-hint">.xlsx / .xls</div>
+              <div class="upload-hint">.xlsx veya .xls</div>
             </div>
             <div class="pick-row">
               <label class="pick-btn">
-                Dosya Sec
+                Dosya seç
                 <input id="fileInput" type="file" name="file" accept=".xlsx,.xls" required />
               </label>
               <div id="selectedFile" class="filename">Henüz dosya seçilmedi</div>
             </div>
-            <button type="submit" id="btn" class="action-btn">Belgeleri oluştur ve indir</button>
+            <button type="submit" id="btn" class="action-btn">ZIP oluştur ve indir</button>
           </form>
 
           <div id="msg" class="msg"></div>
-          <div class="status-row" id="statusRow">Sunucu adresi: -</div>
+          <div class="status-row" id="statusRow"></div>
         </article>
 
       </section>
@@ -287,20 +286,21 @@
 
       const copy = {
         iade: {
-          title: "İade yazısı üretimi",
-          subtitle: "Excel yükleyin; RED satırları için belgeleri toplu oluşturun.",
+          title: "İade reddi yazıları",
+          subtitle:
+            "Mağaza ve müşteri bilgileriyle hazır Word belgeleri üretmek için Excel’inizi yükleyin.",
           guide:
-            "<strong>İNCELEMDEN SONRA DURUM</strong> alanında RED olan kayıtlar seçilir; her satır için bir <strong>.docx</strong> üretilir ve ZIP olarak indirilir.",
-          btn: "İade yazılarını oluştur ve indir",
+            "Yalnızca <strong>İNCELEMDEN SONRA DURUM</strong> sütununda <strong>RED</strong> olan satırlar işlenir. Her satır ayrı bir <strong>.docx</strong> dosyasıdır; tümü tek <strong>ZIP</strong> içinde indirilir. Dosya adları barkod ve stok adına göre verilir.",
+          btn: "İade yazılarını ZIP olarak indir",
           zip: "iade-yazilari.zip",
         },
         teslim: {
-          title: "Teslim tutanağı üretimi",
+          title: "Teslim tutanağı",
           subtitle:
-            "Excel yükleyin; aynı <strong>Takip No</strong>ya sahip satırlar tek tutanakta birleşir.",
+            "Aynı takip numarasındaki ürünleri tek tutanakta toplamak için Excel’inizi yükleyin.",
           guide:
-            "Her farklı takip numarası için bir <strong>.docx</strong> oluşturulur. Belge No = takip no, mağaza = <strong>Teslim Edilen Mağaza</strong>. Ürün tablosunun altında <strong>12 boş satır</strong> ve imza alanları yer alır.",
-          btn: "Tutanakları oluştur ve indir",
+            "Her farklı <strong>Takip No</strong> için bir <strong>.docx</strong> oluşturulur. <strong>Belge No</strong> takip numarasıdır; <strong>Teslim Edilen Mağaza</strong> Excel’deki mağaza alanından okunur. Ürün tablosu, imza alanları ve elle yazılmak üzere boş satırlar belgede yer alır.",
+          btn: "Tutanakları ZIP olarak indir",
           zip: "teslim-tutanaklari.zip",
         },
       };
@@ -318,11 +318,15 @@
         el.addEventListener("change", applyModuleUi);
       });
       applyModuleUi();
-      const API_BASE =
-        location.protocol === "file:"
-          ? "http://localhost:3000"
-          : `${location.protocol}//${location.hostname}:3000`;
-      statusRow.textContent = `Sunucu adresi: ${API_BASE}`;
+      const API_ORIGIN_PRODUCTION = "https://deliveryreport.fly-work.com";
+      const isLocalDev =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1";
+      const API_BASE = isLocalDev
+        ? `${location.protocol}//${location.hostname}:3000`
+        : API_ORIGIN_PRODUCTION;
+      statusRow.textContent = isLocalDev
+        ? "Geliştirme ortamı: arka uç ayrıca çalıştırılmalıdır."
+        : "Hazır. Excel’i seçin, modülü işaretleyin, ZIP indirin.";
 
       function show(text, ok) {
         msg.textContent = text;
@@ -366,13 +370,15 @@
           a.download = mod === "teslim" ? copy.teslim.zip : copy.iade.zip;
           a.click();
           URL.revokeObjectURL(a.href);
-          show("ZIP indirilmeye başladı.", true);
+          show("İndirme başladı.", true);
         } catch (err) {
           const isFetchError =
             err instanceof TypeError && String(err.message || "").toLowerCase().includes("fetch");
           if (isFetchError) {
             show(
-              `Sunucuya bağlanılamadı. Adres: ${API_BASE} — sunucunun çalıştığından emin olun.`,
+              isLocalDev
+                ? "Sunucuya ulaşılamadı. Arka uç uygulamasının çalıştığından emin olun."
+                : "Sunucuya ulaşılamadı. Bağlantınızı kontrol edip bir süre sonra yeniden deneyin.",
               false,
             );
           } else {
