@@ -28,13 +28,13 @@ const logger = {
 
 function createZipArchive() {
   if (typeof archiverImport === "function") {
-    return archiverImport("zip", { zlib: { level: 9 } });
+    return archiverImport("zip", { zlib: { level: 6 } });
   }
   if (typeof archiverImport?.default === "function") {
-    return archiverImport.default("zip", { zlib: { level: 9 } });
+    return archiverImport.default("zip", { zlib: { level: 6 } });
   }
   if (typeof archiverImport?.ZipArchive === "function") {
-    return new archiverImport.ZipArchive({ zlib: { level: 9 } });
+    return new archiverImport.ZipArchive({ zlib: { level: 6 } });
   }
   throw new Error("archiver modulu zip olusturacak sekilde yuklenemedi");
 }
