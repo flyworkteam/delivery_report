@@ -242,7 +242,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Sunucu hatası." });
 });
 
-const PORT = 3033;
-app.listen(PORT, () => {
+const PORT = 3034;
+app.listen(PORT, "0.0.0.0", () => {
   logger.info(`Belge sunucusu dinliyor`, { port: PORT });
 });
